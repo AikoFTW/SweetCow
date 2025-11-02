@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cow Dates Calculator</title>
+  <style>
+    :root{
+      /* Palette sampled from the logo: fresh greens + sky blue + milk white + pink accent */
+      --green-700:#108044;   /* deep pasture */
+      --green-500:#32cd32;   /* bright field */
+      --blue-400:#4ec7de;    /* sky */
+      --blue-600:#1aa3b8;    /* teal linework */
+      --milk:#f7faf9;        /* background */
+      --ink:#0b1b1f;         /* dark text */
+      --pink:#f7a9bf;        /* udder accent */
+      --shadow: 0 10px 24px rgba(0,0,0,.08);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      background:linear-gradient(145deg,var(--milk), #e9f7f3 35%, #f6fbfd);
+      color:var(--ink);
+      display:flex;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      position:fixed; inset:0 auto 0 0; width:280px; background:#fff; border-right:1px solid #e5eef0;
+      padding:18px; transform:translateX(-100%); transition:transform .28s ease; z-index:20;
+      box-shadow: var(--shadow);
+    }
+    .sidebar.open{ transform:translateX(0); }
+    .brand{display:flex; align-items:center; gap:12px; margin-bottom:16px}
+    .brand img{width:44px; height:44px; object-fit:contain; border-radius:12px; box-shadow:0 2px 8px rgba(16,128,68,.25)}
+    .brand h1{font-size:1.05rem; margin:0; line-height:1.1}
+    .nav a{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; text-decoration:none; color:var(--ink)}
+    .nav a.active, .nav a:hover{background:linear-gradient(90deg, rgba(50,205,50,.12), rgba(78,199,222,.12));}
+
+    /* Top bar */
+    .topbar{
+      position:fixed; inset:0 0 auto 0; height:64px; background:rgba(255,255,255,.8); backdrop-filter: blur(8px);
+      display:flex; align-items:center; gap:12px; padding:0 16px; z-index:10; border-bottom:1px solid #e5eef0;
+    }
+    .hamburger{appearance:none; border:0; background:transparent; width:44px; height:44px; border-radius:12px; display:grid; place-items:center; cursor:pointer}
+    .hamburger span{display:block; width:22px; height:2px; background:var(--green-700); position:relative}
+    .hamburger span:before,.hamburger span:after{content:""; position:absolute; left:0; width:22px; height:2px; background:inherit}
+    .hamburger span:before{top:-7px}
+    .hamburger span:after{top:7px}
+
+    .top-title{font-weight:700; letter-spacing:.3px}
+
+    /* Content */
+    .content{ width:100%; max-width:1100px; margin:90px auto 40px; padding:0 16px; }
+
+    .card{
+      background:#fff; border:1px solid #e3eef2; border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;
+    }
+    .card + .card{ margin-top:18px; }
+
+    .hero{
+      display:flex; align-items:center; gap:16px; padding:14px 18px; border-radius:var(--radius);
+      background:linear-gradient(120deg, rgba(50,205,50,.18), rgba(78,199,222,.18));
+      border:1px dashed rgba(26,163,184,.35);
+    }
+    .hero img{width:56px; height:56px; object-fit:contain; border-radius:14px}
+
+    h2{margin:0 0 8px; font-size:1.1rem}
+    h3{margin:0 0 10px; font-size:1rem; color:var(--green-700)}
+
+    .grid{display:grid; gap:14px}
+    @media(min-width:860px){ .grid.two{grid-template-columns:1fr 1fr} }
+
+    .field{display:flex; flex-direction:column; gap:8px}
+    label{font-weight:600; font-size:.92rem}
+    input[type="date"], input[type="text"], button{
+      padding:12px 14px; border:1px solid #dce8eb; border-radius:12px; font-size:1rem; outline:none;
+    }
+    input[type="date"]:focus, input[type="text"]:focus{border-color:var(--blue-600); box-shadow:0 0 0 3px rgba(78,199,222,.2)}
+
+    .btn{
+      background:linear-gradient(135deg,var(--green-700), var(--blue-600)); color:#fff; border:none; cursor:pointer;
+      font-weight:700; letter-spacing:.2px; box-shadow:0 6px 18px rgba(16,128,68,.25);
+    }
+    .btn.secondary{background:linear-gradient(135deg,#fff,#fff); color:var(--green-700); border:1px solid #e3eef2; box-shadow:none}
+
+    .result{
+      padding:12px 14px; background:linear-gradient(90deg,#f9fdfc,#f4fbff); border:1px solid #e6f1f6; border-left:4px solid var(--green-500);
+      border-radius:12px; font-weight:600; letter-spacing:.2px
+    }
+
+    .tag{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:rgba(50,205,50,.12); color:var(--green-700); font-weight:600}
+    .tag .dot{width:8px; height:8px; border-radius:50%; background:var(--green-500)}
+
+    footer{opacity:.7; font-size:.85rem; margin-top:16px}
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="Sweet Cow.png" alt="Logo" />
+      <h1>
+        Sweet Cow
+        <div style="font-weight:500; font-size:.85rem; color:var(--blue-600)">Calculator</div>
+      </h1>
+    </div>
+    <nav class="nav">
+      <a href="#" class="active">🧮 Calculator</a>
+    </nav>
+    <footer>
+      <span class="tag"><span class="dot"></span> Offline‑friendly static site</span>
+    </footer>
+  </aside>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu"><span></span></button>
+    <div class="top-title">Calculator</div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="content">
+
+    <section class="card hero">
+      <img src="Sweet Cow.png" alt="Logo" />
+      <div>
+        <h2>Cow Dates Calculator</h2>
+        <div>Fast, barn‑friendly date helpers using the same palette as your logo. One page. No fluff.</div>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <!-- Section A: Post‑Calving → Insemination Start -->
+      <div class="card">
+        <h3>🍼 Insemination Start (2 months after Calving)</h3>
+        <div class="field">
+          <label for="calvingDate">Calving/Birth Date</label>
+          <input type="date" id="calvingDate" />
+        </div>
+        <div class="field">
+          <button class="btn" id="btnCalving">Calculate</button>
+        </div>
+        <div class="field">
+          <label>Start Insemination On</label>
+          <input type="text" id="inseminationStart" readonly class="result" placeholder="—" />
+        </div>
+      </div>
+
+      <!-- Section B: Pregnancy Checkup → +280 / +260 / +220 from Insemination -->
+      <div class="card">
+        <h3>🤰 Pregnancy Checkup Timeline</h3>
+        <div class="field">
+          <label for="inseminationDate">Insemination Date (base)</label>
+          <input type="date" id="inseminationDate" />
+        </div>
+        <div class="field">
+          <button class="btn" id="btnPreg">Calculate</button>
+        </div>
+        <div class="field">
+          <label>Expected Calving (≈ +280 days)</label>
+          <input type="text" id="expectedCalving" readonly class="result" placeholder="—" />
+        </div>
+        <div class="field">
+          <label>Start Feeding Up (≈ +260 days)</label>
+          <input type="text" id="feedingStart" readonly class="result" placeholder="—" />
+        </div>
+        <div class="field">
+          <label>Begin Dry Period (≈ +220 days)</label>
+          <input type="text" id="dryStart" readonly class="result" placeholder="—" />
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="border-left:6px solid var(--pink)">
+      <h3>Notes</h3>
+      <ul>
+        <li>“2 months after calving” uses **calendar months** (not a flat day count).</li>
+        <li>Gestation targets here use fixed day offsets (220/260/280). Adjust to your farm policy if needed.</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <script>
+    // Helpers that respect calendar quirks
+    function addMonths(date, months){
+      const d = new Date(date);
+      const day = d.getDate();
+      d.setMonth(d.getMonth() + months);
+      // Handle month-end rollover (e.g., Jan 31 + 1 month → Feb 28/29)
+      if(d.getDate() < day){ d.setDate(0); }
+      return d;
+    }
+    function addDays(date, days){
+      const d = new Date(date);
+      d.setDate(d.getDate() + days);
+      return d;
+    }
+    function fmt(date){
+      return date instanceof Date && !isNaN(date) ?
+        date.toLocaleDateString(undefined,{weekday:'short', year:'numeric', month:'short', day:'numeric'}) : '—';
+    }
+
+    // A) 2 months after calving → insemination start
+    document.getElementById('btnCalving').addEventListener('click',()=>{
+      const v = document.getElementById('calvingDate').value;
+      if(!v){ alert('Select the calving/birth date.'); return; }
+      const start = addMonths(new Date(v + 'T00:00:00'), 2);
+      document.getElementById('inseminationStart').value = fmt(start);
+    });
+
+    // B) Pregnancy checkup timeline from insemination
+    document.getElementById('btnPreg').addEventListener('click',()=>{
+      const v = document.getElementById('inseminationDate').value;
+      if(!v){ alert('Select the insemination date.'); return; }
+      const base = new Date(v + 'T00:00:00');
+      const d220 = addDays(base, 220);
+      const d260 = addDays(base, 260);
+      const d280 = addDays(base, 280);
+      document.getElementById('expectedCalving').value = fmt(d280);
+      document.getElementById('feedingStart').value = fmt(d260);
+      document.getElementById('dryStart').value = fmt(d220);
+    });
+
+    // Hamburger logic
+    const sidebar = document.getElementById('sidebar');
+    const hamburger = document.getElementById('hamburger');
+    const closeSidebar = () => sidebar.classList.remove('open');
+    const openSidebar  = () => sidebar.classList.add('open');
+    hamburger.addEventListener('click',()=>{
+      sidebar.classList.toggle('open');
+    });
+    // Close sidebar when clicking outside on wider screens
+    document.addEventListener('click',(e)=>{
+      if(!sidebar.contains(e.target) && !hamburger.contains(e.target)){
+        closeSidebar();
+      }
+    });
+  </script>
+</body>
+</html>
